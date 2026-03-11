@@ -69,7 +69,7 @@ st.markdown('<p class="subtitle">Machine Learning Model using Random Forest</p>'
 @st.cache_data
 def load_data():
 
-    df = pd.read_csv(r"D:\PythonProject\csv\insurance.csv")
+    df = pd.read_csv(r"insurance.csv")
 
     eur_rate = 0.92
     df["charges"] = df["charges"] * eur_rate
@@ -237,5 +237,6 @@ fig7 = px.bar(gender_cost,
               template="plotly_dark",
               color="sex",
               text_auto=True)
+
 
 st.plotly_chart(fig7,use_container_width=True)
