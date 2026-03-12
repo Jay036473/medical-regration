@@ -7,7 +7,8 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-
+# Added r2_score to calculate accuracy
+from sklearn.metrics import r2_score
 
 st.set_page_config(page_title="Medical Cost Predictor", page_icon="⚕️", layout="wide")
 
@@ -66,8 +67,8 @@ st.markdown('<p class="subtitle">Machine Learning Model using Random Forest</p>'
 # =========================
 @st.cache_data
 def load_data():
-
-    df = pd.read_csv(r"insurance.csv")
+    # Changed to relative path to prevent deployment errors
+    df = pd.read_csv("insurance.csv")
 
     eur_rate = 0.92
     df["charges"] = df["charges"] * eur_rate
@@ -76,7 +77,7 @@ def load_data():
 
 
 # =========================
-# TRAIN MODEL
+# TRAIN MODEL (UPDATED TO RETURN SCORE)
 # =========================
 @st.cache_resource
 def train_model(df):
@@ -101,15 +102,32 @@ def train_model(df):
             random_state=42))
     ])
 
-    X_train,X_test,y_train,y_test = train_test_split(X,y,test_size=0.2,random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    model.fit(X_train,y_train)
+    model.fit(X_train, y_train)
 
-    return model
+    # Calculate predictions on the testing data
+    y_pred_log = model.predict(X_test)
+    
+    # Reverse the log transformation to get actual values
+    y_test_actual = np.expm1(y_test)
+    y_pred_actual = np.expm1(y_pred_log)
+    
+    # Calculate R2 Score (Accuracy)
+    model_score = r2_score(y_test_actual, y_pred_actual)
+
+    # Return both model and score
+    return model, model_score
 
 
 df = load_data()
-model = train_model(df)
+# Unpack the model and the score
+model, r2_accuracy = train_model(df)
+
+# =========================
+# DISPLAY MODEL SCORE (NEW)
+# =========================
+st.markdown(f'<p style="text-align:center; font-size:22px; color:#00ff9d; margin-bottom:30px;"><strong>🎯 Model R² Score: {r2_accuracy:.2%}</strong></p>', unsafe_allow_html=True)
 
 # =========================
 # DATA PREVIEW
