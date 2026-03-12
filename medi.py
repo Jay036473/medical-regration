@@ -11,7 +11,7 @@ from sklearn.pipeline import Pipeline
 # =========================
 # PAGE CONFIG
 # =========================
-st.set_page_config(page_title="Medical Cost Predictor", page_icon="⚕️", layout="wide")
+st.set_page_config(page_title="Medical Cost Predictor", page_icon="", layout="wide")
 
 # =========================
 # CUSTOM CSS
@@ -124,7 +124,7 @@ with st.expander("🔍 Preview Dataset"):
 # STATISTICAL SUMMARY
 # =========================
 st.write("---")
-st.subheader("📊 Dataset Statistical Summary")
+st.subheader("Dataset Statistical Summary")
 
 summary = df.describe().T
 summary = summary[["count","mean","std","min","25%","50%","75%","max"]]
@@ -178,7 +178,7 @@ if st.button("Predict Insurance Cost"):
 # DATA CHARTS
 # =========================
 st.write("---")
-st.markdown('<p class="main-title" style="font-size:32px;color:#00ff9d;">📊 Health Data Insights</p>',unsafe_allow_html=True)
+st.markdown('<p class="main-title" style="font-size:32px;color:#00ff9d;">Health Data Insights</p>',unsafe_allow_html=True)
 
 chart_col1,chart_col2 = st.columns(2)
 
@@ -240,3 +240,4 @@ fig7 = px.bar(gender_cost,
 
 
 st.plotly_chart(fig7,use_container_width=True)
+
