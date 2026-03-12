@@ -8,9 +8,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
 
-# =========================
-# PAGE CONFIG
-# =========================
+
 st.set_page_config(page_title="Medical Cost Predictor", page_icon="⚕️", layout="wide")
 
 # =========================
@@ -69,7 +67,7 @@ st.markdown('<p class="subtitle">Machine Learning Model using Random Forest</p>'
 @st.cache_data
 def load_data():
 
-    df = pd.read_csv(r"D\insurance.csv")
+    df = pd.read_csv(r"insurance.csv")
 
     eur_rate = 0.92
     df["charges"] = df["charges"] * eur_rate
