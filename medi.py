@@ -7,8 +7,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import Pipeline
-# Added r2_score to calculate accuracy
-from sklearn.metrics import r2_score
 
 st.set_page_config(page_title="Medical Cost Predictor", page_icon="⚕️", layout="wide")
 
@@ -51,6 +49,17 @@ font-weight:bold;
 border:1px solid #00ff9d;
 }
 
+.score-box{
+text-align:center;
+font-size:20px;
+color:#ffffff;
+background-color: rgba(0, 229, 255, 0.2);
+padding:10px;
+border-radius:8px;
+margin-bottom: 20px;
+border: 1px solid #00e5ff;
+}
+
 label{
 color:white !important;
 font-weight:600;
@@ -62,13 +71,13 @@ font-weight:600;
 st.markdown('<p class="main-title">⚕️ Medical Insurance Cost Prediction</p>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">Machine Learning Model using Random Forest</p>', unsafe_allow_html=True)
 
+
 # =========================
 # LOAD DATA
 # =========================
 @st.cache_data
 def load_data():
-    # Changed to relative path to prevent deployment errors
-    df = pd.read_csv("insurance.csv")
+    df = pd.read_csv(r"insurance.csv")
 
     eur_rate = 0.92
     df["charges"] = df["charges"] * eur_rate
@@ -77,24 +86,23 @@ def load_data():
 
 
 # =========================
-# TRAIN MODEL (UPDATED TO RETURN SCORE)
+# TRAIN MODEL & GET SCORE
 # =========================
 @st.cache_resource
 def train_model(df):
-
     X = df.drop("charges", axis=1)
     y = np.log1p(df["charges"])
 
-    cat_cols = ["sex","smoker","region"]
+    cat_cols = ["sex", "smoker", "region"]
 
     preprocessor = ColumnTransformer(
-        transformers=[("cat",OneHotEncoder(handle_unknown="ignore"),cat_cols)],
+        transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)],
         remainder="passthrough"
     )
 
     model = Pipeline([
-        ("preprocessor",preprocessor),
-        ("regressor",RandomForestRegressor(
+        ("preprocessor", preprocessor),
+        ("regressor", RandomForestRegressor(
             n_estimators=300,
             max_depth=10,
             min_samples_split=5,
@@ -106,46 +114,28 @@ def train_model(df):
 
     model.fit(X_train, y_train)
 
-    # Calculate predictions on the testing data
-    y_pred_log = model.predict(X_test)
-    
-    # Reverse the log transformation to get actual values
-    y_test_actual = np.expm1(y_test)
-    y_pred_actual = np.expm1(y_pred_log)
-    
-    # Calculate R2 Score (Accuracy)
-    model_score = r2_score(y_test_actual, y_pred_actual)
+    # Calculate the R-squared score on the test data
+    score = model.score(X_test, y_test)
 
-    # Return both model and score
-    return model, model_score
+    return model, score
 
 
 df = load_data()
-# Unpack the model and the score
-model, r2_accuracy = train_model(df)
+model, model_score = train_model(df)  # <-- Unpacking the model and the score
 
 # =========================
-# DISPLAY MODEL SCORE (NEW)
+# DISPLAY MODEL SCORE
 # =========================
-st.markdown(f'<p style="text-align:center; font-size:22px; color:#00ff9d; margin-bottom:30px;"><strong>🎯 Model R² Score: {r2_accuracy:.2%}</strong></p>', unsafe_allow_html=True)
+# Shows the accuracy/score prominently
+st.markdown(f'<div class="score-box">🎯 Model Accuracy (R² Score): {model_score * 100:.2f}%</div>',
+            unsafe_allow_html=True)
 
 # =========================
 # DATA PREVIEW
 # =========================
 with st.expander("🔍 Preview Dataset"):
-    st.dataframe(df.head(50),use_container_width=True)
-    st.write("Total Records:",df.shape[0])
-
-# =========================
-# STATISTICAL SUMMARY
-# =========================
-st.write("---")
-st.subheader("📊 Dataset Statistical Summary")
-
-summary = df.describe().T
-summary = summary[["count","mean","std","min","25%","50%","75%","max"]]
-
-st.dataframe(summary,use_container_width=True)
+    st.dataframe(df.head(50), use_container_width=True)
+    st.write("Total Records:", df.shape[0])
 
 # =========================
 # INPUT SECTION
@@ -153,91 +143,89 @@ st.dataframe(summary,use_container_width=True)
 st.write("---")
 st.subheader("Enter Patient Details")
 
-col1,col2,col3 = st.columns(3)
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    age = st.number_input("Age",18,100,30)
-    sex = st.selectbox("Gender",df["sex"].unique())
+    age = st.number_input("Age", 18, 100, 30)
+    sex = st.selectbox("Gender", df["sex"].unique())
 
 with col2:
-    bmi = st.number_input("BMI",15.0,60.0,25.5)
-    smoker = st.selectbox("Smoker",df["smoker"].unique())
+    bmi = st.number_input("BMI", 15.0, 60.0, 25.5)
+    smoker = st.selectbox("Smoker", df["smoker"].unique())
 
 with col3:
-    children = st.number_input("Children",0,10,0)
-    region = st.selectbox("Region",df["region"].unique())
+    children = st.number_input("Children", 0, 10, 0)
+    region = st.selectbox("Region", df["region"].unique())
 
 # =========================
 # PREDICTION
 # =========================
 if st.button("Predict Insurance Cost"):
-
     input_data = pd.DataFrame({
-        "age":[age],
-        "sex":[sex],
-        "bmi":[bmi],
-        "children":[children],
-        "smoker":[smoker],
-        "region":[region]
+        "age": [age],
+        "sex": [sex],
+        "bmi": [bmi],
+        "children": [children],
+        "smoker": [smoker],
+        "region": [region]
     })
 
     log_pred = model.predict(input_data)
 
-    cost = max(0,int(np.expm1(log_pred[0])))
+    cost = max(0, int(np.expm1(log_pred[0])))
 
     st.markdown(
-    f'<div class="result-box">Estimated Medical Insurance Bill: € {cost:,.2f}</div>',
-    unsafe_allow_html=True
+        f'<div class="result-box">Estimated Medical Insurance Bill: € {cost:,.2f}</div>',
+        unsafe_allow_html=True
     )
 
 # =========================
 # DATA CHARTS
 # =========================
 st.write("---")
-st.markdown('<p class="main-title" style="font-size:32px;color:#00ff9d;">📊 Health Data Insights</p>',unsafe_allow_html=True)
+st.markdown('<p class="main-title" style="font-size:32px;color:#00ff9d;">📊 Health Data Insights</p>',
+            unsafe_allow_html=True)
 
-chart_col1,chart_col2 = st.columns(2)
+chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
-
-    fig1 = px.histogram(df,x="charges",nbins=40,
+    fig1 = px.histogram(df, x="charges", nbins=40,
                         title="1. Distribution of Medical Charges (€)",
                         template="plotly_dark")
-    st.plotly_chart(fig1,use_container_width=True)
+    st.plotly_chart(fig1, use_container_width=True)
 
-    fig3 = px.box(df,x="smoker",y="charges",
+    fig3 = px.box(df, x="smoker", y="charges",
                   title="3. Insurance Costs by Smoker Status",
                   template="plotly_dark",
                   color="smoker")
-    st.plotly_chart(fig3,use_container_width=True)
+    st.plotly_chart(fig3, use_container_width=True)
 
-    fig5 = px.scatter(df,x="bmi",y="charges",
+    fig5 = px.scatter(df, x="bmi", y="charges",
                       title="5. BMI vs Medical Charges",
                       template="plotly_dark",
                       color="smoker")
-    st.plotly_chart(fig5,use_container_width=True)
+    st.plotly_chart(fig5, use_container_width=True)
 
 with chart_col2:
-
-    fig2 = px.scatter(df,x="age",y="charges",
+    fig2 = px.scatter(df, x="age", y="charges",
                       title="2. Age vs Insurance Charges",
                       template="plotly_dark",
                       color="smoker")
-    st.plotly_chart(fig2,use_container_width=True)
+    st.plotly_chart(fig2, use_container_width=True)
 
     region_cost = df.groupby("region")["charges"].mean().reset_index()
 
-    fig4 = px.bar(region_cost,x="region",y="charges",
+    fig4 = px.bar(region_cost, x="region", y="charges",
                   title="4. Average Charges by Region",
                   template="plotly_dark",
                   color="region")
-    st.plotly_chart(fig4,use_container_width=True)
+    st.plotly_chart(fig4, use_container_width=True)
 
-    fig6 = px.box(df,x="children",y="charges",
+    fig6 = px.box(df, x="children", y="charges",
                   title="6. Charges by Number of Children",
                   template="plotly_dark",
                   color="children")
-    st.plotly_chart(fig6,use_container_width=True)
+    st.plotly_chart(fig6, use_container_width=True)
 
 # =========================
 # GENDER CHART
@@ -254,4 +242,4 @@ fig7 = px.bar(gender_cost,
               color="sex",
               text_auto=True)
 
-st.plotly_chart(fig7,use_container_width=True)
+st.plotly_chart(fig7, use_container_width=True)
