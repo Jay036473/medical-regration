@@ -77,11 +77,8 @@ st.markdown('<p class="subtitle">Machine Learning Model using Random Forest</p>'
 # =========================
 @st.cache_data
 def load_data():
+    # Loading the data exactly as it is in the CSV (in Dollars)
     df = pd.read_csv(r"insurance.csv")
-
-    eur_rate = 0.92
-    df["charges"] = df["charges"] * eur_rate
-
     return df
 
 
@@ -121,12 +118,11 @@ def train_model(df):
 
 
 df = load_data()
-model, model_score = train_model(df)  # <-- Unpacking the model and the score
+model, model_score = train_model(df)
 
 # =========================
 # DISPLAY MODEL SCORE
 # =========================
-# Shows the accuracy/score prominently
 st.markdown(f'<div class="score-box">🎯 Model Accuracy (R² Score): {model_score * 100:.2f}%</div>',
             unsafe_allow_html=True)
 
@@ -174,8 +170,9 @@ if st.button("Predict Insurance Cost"):
 
     cost = max(0, int(np.expm1(log_pred[0])))
 
+    # Changed symbol to $
     st.markdown(
-        f'<div class="result-box">Estimated Medical Insurance Bill: € {cost:,.2f}</div>',
+        f'<div class="result-box">Estimated Medical Insurance Bill: $ {cost:,.2f}</div>',
         unsafe_allow_html=True
     )
 
@@ -189,8 +186,9 @@ st.markdown('<p class="main-title" style="font-size:32px;color:#00ff9d;">📊 He
 chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
+    # Changed chart title to ($)
     fig1 = px.histogram(df, x="charges", nbins=40,
-                        title="1. Distribution of Medical Charges (€)",
+                        title="1. Distribution of Medical Charges ($)",
                         template="plotly_dark")
     st.plotly_chart(fig1, use_container_width=True)
 
