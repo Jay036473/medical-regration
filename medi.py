@@ -120,11 +120,6 @@ def train_model(df):
 df = load_data()
 model, model_score = train_model(df)
 
-# =========================
-# DISPLAY MODEL SCORE
-# =========================
-st.markdown(f'<div class="score-box">🎯 Model Accuracy (R² Score): {model_score * 100:.2f}%</div>',
-            unsafe_allow_html=True)
 
 # =========================
 # DATA PREVIEW
@@ -154,7 +149,7 @@ with col3:
     region = st.selectbox("Region", df["region"].unique())
 
 # =========================
-# PREDICTION
+# PREDICTION (Score moved here!)
 # =========================
 if st.button("Predict Insurance Cost"):
     input_data = pd.DataFrame({
@@ -170,7 +165,11 @@ if st.button("Predict Insurance Cost"):
 
     cost = max(0, int(np.expm1(log_pred[0])))
 
-    # Changed symbol to $
+    # Display the score first
+    st.markdown(f'<div class="score-box">🎯 Model Accuracy (R² Score): {model_score * 100:.2f}%</div>',
+                unsafe_allow_html=True)
+
+    # Then display the prediction result
     st.markdown(
         f'<div class="result-box">Estimated Medical Insurance Bill: $ {cost:,.2f}</div>',
         unsafe_allow_html=True
@@ -186,7 +185,6 @@ st.markdown('<p class="main-title" style="font-size:32px;color:#00ff9d;">📊 He
 chart_col1, chart_col2 = st.columns(2)
 
 with chart_col1:
-    # Changed chart title to ($)
     fig1 = px.histogram(df, x="charges", nbins=40,
                         title="1. Distribution of Medical Charges ($)",
                         template="plotly_dark")
